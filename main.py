@@ -4,6 +4,7 @@ from models import Base
 from database import engine, AsyncSessionLocal
 from pydantic import BaseModel
 import crud
+import uvicorn
 
 app = FastAPI()
 
@@ -124,3 +125,10 @@ async def get_claims_by_policyholder_endpoint(policyholder_id: int, db: AsyncSes
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching claims: {str(e)}")
+
+@app.get("/")
+def read_root():
+    return {"message": "Service is running"}
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
