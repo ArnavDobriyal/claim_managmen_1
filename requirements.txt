@@ -5,3 +5,4 @@ asyncpg
 pydantic
 psycopg2-binary
 bcrypt
+prometheus-fastapi-instrumentator
