@@ -23,13 +23,13 @@ app.add_middleware(
 async def get_db():
     async with AsyncSessionLocal() as session:
         yield session
-
+Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 @app.on_event("startup")
 async def startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     # Initialize and expose Prometheus metrics at /metrics endpoint
-    Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+    
 
 # Health-check endpoint
 @app.get("/health")
