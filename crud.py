@@ -29,18 +29,16 @@ async def get_policyholder(db: AsyncSession, policyholder_id: int):
     result = await db.execute(select(Policyholder).where(Policyholder.id == policyholder_id))
     return result.scalar_one_or_none()
 
-async def create_policyholder(db: AsyncSession, name: str, email: str, password:str):
+async def create_policyholder(db: AsyncSession, name: str, email: str, password: str):
     validate_email(email)
     new_id = await generate_policyholder_id(db)
-    policyholder = Policyholder(id=new_id, name=name, email=email,password=password)
-    if password == "admin1234":
-        policyholder.is_admin = True
-    else:
-        policyholder.is_admin = False
+    policyholder = Policyholder(id=new_id, name=name, email=email)
+    policyholder.set_password(password)
     db.add(policyholder)
     await db.commit()
     await db.refresh(policyholder)
     return policyholder
+
 
 
 async def create_policy(db: AsyncSession, policyholder_id: int, coverage: float):
@@ -136,15 +134,16 @@ async def delete_policy(db: AsyncSession, policyholder_id: int, policy_id: int):
     await db.commit()
     return {"message": f"Policy {policy_id} and related claims deleted successfully"}
 
-async def update_policyholder(db: AsyncSession, policyholder_id: int, name: str, email: str,password:str):
+async def update_policyholder(db: AsyncSession, policyholder_id: int, name: str, email: str, password: str):
     policyholder = await db.get(Policyholder, policyholder_id)
     if not policyholder:
         raise HTTPException(status_code=404, detail="Policyholder not found")
     policyholder.name = name
     policyholder.email = email
-    policyholder.password=password
+    policyholder.set_password(password)
     await db.commit()
     return policyholder
+
 
 
 async def get_all_policyholders(db: AsyncSession):
@@ -175,16 +174,13 @@ async def check_admin_status(db: AsyncSession, policyholder_id: int) -> bool:
         return policyholder.is_admin
     return False
 
-async def login(db: AsyncSession,policyholder_id: int,password:int):
-    result = await db.execute(select(Policyholder.password).filter(Policyholder.id == policyholder_id))
-    if password == result:
-        admin=check_admin_status(db,policyholder_id)
-        if admin:
-            return 123
-        else:
-            return 321
-    else:
-        return False 
+async def login(db: AsyncSession, policyholder_id: int, password: str):
+    result = await db.execute(select(Policyholder).filter(Policyholder.id == policyholder_id))
+    policyholder = result.scalars().first()
+    if policyholder and policyholder.check_password(password):
+        return 123 if policyholder.is_admin else 321
+    return False
+ 
 
 
 
