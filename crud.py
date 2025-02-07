@@ -43,10 +43,10 @@ async def create_policyholder(db: AsyncSession, name: str, email: str, password:
     return policyholder
 
 
-async def create_policy(db: AsyncSession, policyholder_id: int, coverage: float, status: str):
+async def create_policy(db: AsyncSession, policyholder_id: int, coverage: float):
     validate_coverage(coverage)
     new_id = await generate_policyholder_id(db)
-    policy = Policy(policyholder_id=policyholder_id, policy_id=new_id, coverage=coverage, status=status)
+    policy = Policy(policyholder_id=policyholder_id, policy_id=new_id, coverage=coverage, status="active")
     db.add(policy)
     await db.commit()
     await db.refresh(policy)
@@ -175,7 +175,16 @@ async def check_admin_status(db: AsyncSession, policyholder_id: int) -> bool:
         return policyholder.is_admin
     return False
 
-
+async def login(db: AsyncSession,policyholder_id: int,password:int):
+    result = await db.execute(select(Policyholder.password).filter(Policyholder.id == policyholder_id))
+    if password == result:
+        admin=check_admin_status(db,policyholder_id)
+        if admin:
+            return 123
+        else:
+            return 321
+    else:
+        return False 
 
 
 
